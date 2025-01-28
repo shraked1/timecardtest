@@ -45,13 +45,51 @@ export default function Home() {
   const [expandedWeeks, setExpandedWeeks] = useState<{ [key: string]: boolean }>({});
   const [records, setRecords] = useState<PunchRecord[]>([]);
 
-  // Load records from localStorage on initial render
-  useEffect(() => {
-    const savedRecords = localStorage.getItem('timecardRecords');
-    if (savedRecords) {
-      setRecords(JSON.parse(savedRecords));
+  const generateDefaultRecords = useCallback(() => {
+    const defaultRecords: PunchRecord[] = [];
+    const startDate = new Date('2025-01-02'); // Starting from January 2nd, 2025
+    
+    // Generate 4 weeks of records, 5 per week
+    for (let week = 0; week < 4; week++) {
+      for (let day = 0; day < 5; day++) {
+        const currentDate = new Date(startDate);
+        currentDate.setDate(startDate.getDate() + (week * 7) + day);
+        
+        const formattedDate = currentDate.toLocaleDateString('en-US', {
+          month: '2-digit',
+          day: '2-digit',
+          year: '2-digit',
+          timeZone: 'UTC'
+        });
+
+        defaultRecords.push({
+          date: formattedDate,
+          timeIn: '09:00 AM',
+          timeOut: '05:00 PM',
+          break: '30',
+          location: 'Store20',
+          type: 'Regular',
+          estOT: '0.00',
+          hours: '7.50',
+          isPending: false,
+          isManual: false,
+          notes: ''
+        });
+      }
     }
+    return defaultRecords;
   }, []);
+
+  useEffect(() => {
+    const storedRecords = localStorage.getItem('punchRecords');
+    if (!storedRecords) {
+      const defaultRecords = generateDefaultRecords();
+      setRecords(defaultRecords);
+      localStorage.setItem('punchRecords', JSON.stringify(defaultRecords));
+    } else {
+      setRecords(JSON.parse(storedRecords));
+    }
+  }, [generateDefaultRecords]);
 
   // Save records to localStorage whenever they change
   useEffect(() => {
